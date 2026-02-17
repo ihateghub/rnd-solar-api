@@ -1,6 +1,3 @@
-
-
-
 // Complete server.js - Express server with Microsoft Authentication
 const userMap = {
   "naveen.chamaria@vikramsolar.com": "Naveen Kumar Chamaria",
@@ -74,33 +71,15 @@ function getKey(header, callback) {
   });
 }
 
-// Authentication middleware for Microsoft tokens
+// Authentication middleware DISABLED - all requests pass through with default user
 function authenticateMicrosoftToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ message: 'Token missing' });
-  }
-
-  jwt.verify(token, getKey, {}, (err, decoded) => {
-    if (err) {
-      console.error("❌ Microsoft token verification failed:", err);
-      return res.status(403).json({ message: 'Invalid token' });
-    }
-    
-    // Check if user email is authorized
-    const userEmail = decoded.preferred_username || decoded.upn || decoded.email;
-    
-    if (!AUTHORIZED_EMAILS.includes(userEmail)) {
-      console.log(`❌ Unauthorized email attempted access: ${userEmail}`);
-      return res.status(403).json({ message: 'Unauthorized email address' });
-    }
-    
-    console.log(`✅ Authorized user authenticated: ${userMap[userEmail] || userEmail}`);
-    req.user = decoded;
-    next();
-  });
+  req.user = {
+    preferred_username: "rnd.lab@vikramsolar.com",
+    upn: "rnd.lab@vikramsolar.com",
+    email: "rnd.lab@vikramsolar.com",
+    name: "R&D User"
+  };
+  next();
 }
 
 // Enable CORS for your domains (updated to include Authorization header)
