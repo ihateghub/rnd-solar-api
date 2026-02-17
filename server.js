@@ -43,7 +43,7 @@ const AUTHORIZED_EMAILS = [
   "sumit.kumar@vikramsolar.com",
   "rnd.lab@vikramsolar.com",
   "samaresh.banerjee89@gmail.com",
-  "sreetama.biswas@vikramsolar.com
+  "sreetama.biswas@vikramsolar.com"
 ];
 
 require('dotenv').config();
