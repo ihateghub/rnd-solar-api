@@ -194,92 +194,60 @@ def main():
     # Create data directory if it doesn't exist
     os.makedirs("data", exist_ok=True)
     
-    # Get OneDrive share URLs from environment variables
-    solar_lab_tests_url = os.environ.get("SOLAR_LAB_TESTS_URL")
-    line_trials_url = os.environ.get("LINE_TRIALS_URL")
-    certifications_url = os.environ.get("CERTIFICATIONS_URL")
-    chamber_tests_url = os.environ.get("CHAMBER_TESTS_URL")
-    
     print("\n=== Starting OneDrive file download process ===")
     print(f"Current directory: {os.getcwd()}")
     print(f"Data directory: {os.path.abspath('data')}")
     
-    success = True
-    
-    # Download Solar Lab Tests Excel file
-    if solar_lab_tests_url:
-        print("\n=== Processing Solar Lab Tests file ===")
-        result = download_file(solar_lab_tests_url, "data/Solar_Lab_Tests.xlsx")
-        success = result and success
-    else:
-        print("WARNING: SOLAR_LAB_TESTS_URL environment variable not set")
-        success = False
-    
-    # Download Line Trials Excel file
-    if line_trials_url:
-        print("\n=== Processing Line Trials file ===")
-        result = download_file(line_trials_url, "data/Line_Trials.xlsx")
-        success = result and success
-    else:
-        print("WARNING: LINE_TRIALS_URL environment variable not set")
-        success = False
-    
-    # Download Certifications Excel file
-    if certifications_url:
-        print("\n=== Processing Certifications file ===")
-        result = download_file(certifications_url, "data/Certifications.xlsx")
-        success = result and success
-    else:
-        print("WARNING: CERTIFICATIONS_URL environment variable not set")
-        success = False
+    # Track actual download failures (not missing env vars)
+    download_failures = 0
+    download_successes = 0
+    skipped = 0
 
-    # ADD THIS NEW SECTION - Download Chamber Tests Excel file
-    if chamber_tests_url:
-        print("\n=== Processing Chamber Tests file ===")
-        result = download_file(chamber_tests_url, "data/Chamber_Tests.xlsx")
-        success = result and success
-    else:
-        print("WARNING: CHAMBER_TESTS_URL environment variable not set")
-        success = False
+    # Define all files to download: (env_var_name, output_path, label)
+    files = [
+        ("SOLAR_LAB_TESTS_URL", "data/Solar_Lab_Tests.xlsx", "Solar Lab Tests"),
+        ("LINE_TRIALS_URL", "data/Line_Trials.xlsx", "Line Trials"),
+        ("CERTIFICATIONS_URL", "data/Certifications.xlsx", "Certifications"),
+        ("CHAMBER_TESTS_URL", "data/Chamber_Tests.xlsx", "Chamber Tests"),
+        ("RND_TODOS_URL", "data/RND_Todos.xlsx", "R&D Todos"),
+        ("DAILY_UPDATES_URL", "data/Daily_Updates.xlsx", "Daily Updates"),
+    ]
 
+    for env_var, output_path, label in files:
+        url = os.environ.get(env_var)
+        if url:
+            print(f"\n=== Processing {label} file ===")
+            result = download_file(url, output_path)
+            if result:
+                download_successes += 1
+            else:
+                download_failures += 1
+        else:
+            print(f"\nINFO: {env_var} environment variable not set — skipping {label}")
+            skipped += 1
 
-    rnd_todos_url = os.environ.get("RND_TODOS_URL")
-    if rnd_todos_url:
-        print("\n=== Processing R&D Todos file ===")
-        result = download_file(rnd_todos_url, "data/RND_Todos.xlsx")
-        success = result and success
-    else:
-        print("WARNING: RND_TODOS_URL environment variable not set")
-        success = False
-
-    daily_updates_url = os.environ.get("DAILY_UPDATES_URL")
-    if daily_updates_url:
-        print("\n=== Processing Daily Updates file ===")
-        result = download_file(daily_updates_url, "data/Daily_Updates.xlsx")
-        success = result and success
-    else:
-        print("WARNING: DAILY_UPDATES_URL environment variable not set")
-        success = False
     # Always force changes to be recognized
     force_changes()
     
     print("\n=== Download process completed ===")
-    print(f"Overall success: {success}")
+    print(f"  Successful: {download_successes}")
+    print(f"  Failed:     {download_failures}")
+    print(f"  Skipped:    {skipped} (env var not set)")
     
     # List files in data directory
     print("\n=== Files in data directory ===")
-    for file in os.listdir("data"):
+    for file in sorted(os.listdir("data")):
         file_path = os.path.join("data", file)
-        if os.path.isfile(file_path):
+        if os.path.isfile(file_path) and file.endswith('.xlsx'):
             size = os.path.getsize(file_path)
-            print(f"{file}: {size} bytes")
+            print(f"  {file}: {size} bytes")
     
-    # Exit with error code if any download failed
-    if not success:
-        print("Exiting with error code 1 due to download failures")
+    # Only fail if an actual download failed, NOT for missing env vars
+    if download_failures > 0:
+        print(f"\nExiting with error code 1 due to {download_failures} download failure(s)")
         sys.exit(1)
     else:
-        print("All downloads successful")
+        print("\nAll configured downloads successful")
 
 if __name__ == "__main__":
     main()
